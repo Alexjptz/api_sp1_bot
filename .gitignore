@@ -7,6 +7,7 @@ venv/
 bot.log
 __pycache__/
 *.py[cod]
+test.py
 
 .idea
 *.env

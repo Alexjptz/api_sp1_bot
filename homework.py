@@ -2,6 +2,7 @@ import logging
 import os
 import time
 
+from pprint import pprint
 import requests
 import telegram
 from dotenv import load_dotenv
@@ -15,6 +16,11 @@ PRACTICUM_TOKEN = os.getenv('PRACTICUM_TOKEN')
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
 BOT = telegram.Bot(token=TELEGRAM_TOKEN)
+VERDICTS = {
+    'rejected': 'К сожалению в работе нашлись ошибки.',
+    'approved': ('Ревьюеру всё понравилось, '
+                 'можно приступать к следующему уроку')
+}
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -28,23 +34,25 @@ logging.basicConfig(
 def parse_homework_status(homework):
     try:
         homework_name = homework['homework_name']
-    except BaseException as e:
-        logging.exception('Некорректный ответ сервера {}'.format(e))
-        return 'Проверь параметры запроса.'
-    if homework['status'] == 'rejected':
-        verdict = 'К сожалению в работе нашлись ошибки.'
-    elif homework['status'] == 'approved':
-        verdict = (
-            'Ревьюеру всё понравилось, '
-            'можно приступать к следующему уроку.'
-        )
-    else:
-        verdict = ('Не могу определить статус работы')
+    except KeyError as e:
+        logging.exception('Отсутствует название работы: {}'.format(e))
+        return 'Отсутствует название работы.'
+    try:
+        status = homework['status']
+    except KeyError as e:
+        logging.exception('Отсутствует статус работы: {}'.format(e))
+        return 'Отсутствует статус работы'
+    try:
+        verdict = VERDICTS[status]
+    except KeyError as e:
+        logging.exception('Некорректный статус работы: {}'.format(e))
+        verdict = 'Не корректный статус работы: {}'.format(homework['status'])
         return verdict
-    return f'У вас проверили работу "{homework_name}"!\n\n{verdict}'
+    else:
+        return f'У вас проверили работу "{homework_name}"!\n\n{verdict}'
 
 
-def get_homework_statuses(current_timestamp):
+def get_homework_statuses(current_timestamp=int(time.time())):
     headers = {'Authorization': f'OAuth {PRACTICUM_TOKEN}'}
     params = {
         'from_date': current_timestamp
@@ -57,8 +65,10 @@ def get_homework_statuses(current_timestamp):
             params=params
         )
     except RequestException as e:
-        logging.exception('Exeption: {}'.format(e))
-        send_message('Сервер не доступен, попробую позже...')
+        logging.exception(
+            'Exсeption {} with params: {}, {}'.format(e, headers, params)
+        )
+        send_message('Сервер не доступен...')
         return empty
     return homework_statuses.json()
 
@@ -77,10 +87,7 @@ def main():
                 send_message(
                     parse_homework_status(new_homework.get('homeworks')[0])
                 )
-            current_timestamp = new_homework.get(
-                'current_date',
-                current_timestamp
-            )
+            current_timestamp = (new_homework.get('current_date'))
             time.sleep(900)
 
         except Exception as e:
