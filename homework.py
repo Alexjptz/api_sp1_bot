@@ -11,13 +11,13 @@ load_dotenv()
 
 
 PRAKTIKUM_API = 'https://praktikum.yandex.ru/api/user_api/homework_statuses/'
-PRAKTIKUM_TOKEN = os.getenv('PRACTICUM_TOKEN')
+PRAKTIKUM_TOKEN = os.getenv('PRAKTIKUM_TOKEN')
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
 VERDICTS = {
     'rejected': 'К сожалению в работе нашлись ошибки.',
     'approved': ('Ревьюеру всё понравилось, '
-                 'можно приступать к следующему уроку')
+                 'можно приступать к следующему уроку.')
 }
 
 logging.basicConfig(
