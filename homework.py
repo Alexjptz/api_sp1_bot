@@ -39,12 +39,12 @@ def parse_homework_status(homework):
         status = homework['status']
     except KeyError as e:
         logging.exception('Отсутствует статус работы: {}'.format(e))
-        return 'Отсутствует статус работы'
+        return 'Отсутствует статус работы.'
     try:
         verdict = VERDICTS[status]
     except KeyError as e:
         logging.exception('Некорректный статус работы: {}'.format(e))
-        verdict = 'Не корректный статус работы: {}'.format(homework['status'])
+        verdict = 'Не корректный статус работы: {}'.format(status)
         return verdict
     return f'У вас проверили работу "{homework_name}"!\n\n{verdict}'
 
